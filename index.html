@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Belajar Interaktif PAI & Budi Pekerti</title>
+    
+    <!-- Memuat Tailwind CSS untuk styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Memuat Font Awesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Memuat Google Fonts (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Memuat Marked.js untuk mem-parsing Markdown dari respon AI -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        // Palet Hijau Tosca Islami
+                        tosca: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Animasi Transisi Halus */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Styling Scrollbar untuk Chatbox */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Agar chatbox AI bisa memformat teks dengan rapi */
+        .prose-ai p { margin-bottom: 0.5rem; }
+        .prose-ai strong { color: #0f766e; }
+        .prose-ai ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans h-screen flex overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="w-64 bg-tosca-900 text-white flex flex-col shadow-2xl absolute md:relative z-20 h-full transition-transform duration-300 -translate-x-full md:translate-x-0">
+        <div class="p-6 flex items-center justify-between border-b border-tosca-800">
+            <h1 class="text-xl font-bold tracking-wide flex items-center gap-3">
+                <i class="fa-solid fa-moon text-tosca-300 text-2xl"></i> 
+                <span>PAI<br><span class="text-xs font-normal text-tosca-200">Interaktif</span></span>
+            </h1>
+            <button id="close-sidebar" class="md:hidden text-tosca-200 hover:text-white text-xl">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            <p class="text-xs font-semibold text-tosca-400 uppercase tracking-wider mb-4 px-2">Materi Pokok</p>
+            
+            <button onclick="showSection('asmaul-husna')" id="btn-asmaul-husna" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-tosca-800 text-white font-medium transition-all hover:bg-tosca-700 shadow-sm">
+                <div class="w-8 h-8 rounded-lg bg-tosca-700 flex items-center justify-center text-tosca-200"><i class="fa-solid fa-star-and-crescent"></i></div>
+                <span class="text-left flex-1">Asmaul Husna</span>
+            </button>
+            
+            <button onclick="showSection('fiqih')" id="btn-fiqih" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-tosca-200 font-medium transition-all hover:bg-tosca-800 hover:text-white">
+                <div class="w-8 h-8 rounded-lg bg-transparent flex items-center justify-center text-tosca-300"><i class="fa-solid fa-hands-holding-circle"></i></div>
+                <span class="text-left flex-1">Fiqih & Zakat</span>
+            </button>
+            
+            <button onclick="showSection('adab')" id="btn-adab" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-tosca-200 font-medium transition-all hover:bg-tosca-800 hover:text-white">
+                <div class="w-8 h-8 rounded-lg bg-transparent flex items-center justify-center text-tosca-300"><i class="fa-solid fa-users"></i></div>
+                <span class="text-left flex-1">Adab Remaja</span>
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-tosca-800 text-center">
+            <p class="text-xs text-tosca-400">© 2026 Portal PAI v1.0</p>
+        </div>
+    </aside>
+
+    <!-- Overlay untuk Sidebar di Mobile -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 z-10 hidden md:hidden transition-opacity"></div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-full relative min-w-0">
+        
+        <!-- Header Mobile -->
+        <header class="bg-white px-4 py-4 shadow-sm flex items-center gap-4 md:hidden z-10">
+            <button id="open-sidebar" class="text-slate-500 hover:text-tosca-600 text-xl">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <h2 class="font-semibold text-slate-800">Ruang Belajar</h2>
+        </header>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto bg-slate-50 relative pb-4">
+            
+            <!-- Dekorasi Latar Belakang -->
+            <div class="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-tosca-100 to-slate-50 z-0"></div>
+
+            <div class="relative z-10 max-w-4xl mx-auto p-6 md:p-10" id="content-container">
+                
+                <!-- SECTION: ASMAUL HUSNA -->
+                <section id="sec-asmaul-husna" class="content-section">
+                    <div class="mb-8">
+                        <span class="inline-block px-3 py-1 bg-tosca-100 text-tosca-700 rounded-full text-sm font-semibold mb-3">Bab 1</span>
+                        <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4 tracking-tight">Meneladani Asmaul Husna</h2>
+                        <p class="text-slate-600 leading-relaxed text-lg">Memahami dan mengamalkan nama-nama Allah SWT yang indah dalam kehidupan sehari-hari untuk membentuk karakter yang mulia.</p>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold arabic">الكريم</div>
+                                <div>
+                                    <h3 class="font-bold text-lg text-slate-800">Al-Karim</h3>
+                                    <p class="text-sm text-slate-500">Maha Mulia / Maha Dermawan</p>
+                                </div>
+                            </div>
+                            <p class="text-slate-600 text-sm leading-relaxed">Allah SWT Maha Dermawan. Kita meneladaninya dengan menjadi pribadi yang murah hati, suka berbagi, dan tidak pamrih dalam menolong sesama.</p>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl font-bold arabic">المؤمن</div>
+                                <div>
+                                    <h3 class="font-bold text-lg text-slate-800">Al-Mu'min</h3>
+                                    <p class="text-sm text-slate-500">Maha Memberi Rasa Aman</p>
+                                </div>
+                            </div>
+                            <p class="text-slate-600 text-sm leading-relaxed">Allah memberikan ketenangan hati. Sebagai hamba-Nya, kita harus menjadi orang yang dapat dipercaya dan memberikan rasa aman bagi orang di sekitar kita.</p>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold arabic">الوكيل</div>
+                                <div>
+                                    <h3 class="font-bold text-lg text-slate-800">Al-Wakil</h3>
+                                    <p class="text-sm text-slate-500">Maha Memelihara</p>
+                                </div>
+                            </div>
+                            <p class="text-slate-600 text-sm leading-relaxed">Menyerahkan segala urusan kepada Allah (Tawakkal) setelah berusaha maksimal. Mendidik kita untuk tidak mudah putus asa.</p>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow bg-tosca-50/50">
+                            <div class="flex items-start gap-3">
+                                <i class="fa-solid fa-lightbulb text-tosca-500 mt-1"></i>
+                                <div>
+                                    <h4 class="font-semibold text-tosca-800 mb-1">Refleksi Diri</h4>
+                                    <p class="text-sm text-tosca-700">Pilih satu Asmaul Husna hari ini, dan coba praktikkan maknanya di lingkungan sekolah atau rumahmu.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION: FIQIH & ZAKAT -->
+                <section id="sec-fiqih" class="content-section hidden">
+                    <div class="mb-8">
+                        <span class="inline-block px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-semibold mb-3">Bab 2</span>
+                        <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4 tracking-tight">Fiqih Ibadah & Zakat</h2>
+                        <p class="text-slate-600 leading-relaxed text-lg">Memahami ketentuan syariat Islam dalam beribadah mahdhah dan kepedulian sosial melalui Zakat.</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                            <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-coins text-amber-500"></i> Konsep Zakat
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <h4 class="font-semibold text-slate-800 mb-2">Zakat Fitrah</h4>
+                                    <p class="text-sm text-slate-600">Zakat yang wajib dikeluarkan setiap jiwa Muslim menjelang Idul Fitri untuk menyucikan jiwa. Besarannya 2,5 kg beras atau makanan pokok.</p>
+                                </div>
+                                <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <h4 class="font-semibold text-slate-800 mb-2">Zakat Mal (Harta)</h4>
+                                    <p class="text-sm text-slate-600">Zakat harta benda yang wajib dikeluarkan jika telah mencapai nisab (batas minimal) dan haul (disimpan selama 1 tahun lunar).</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-r from-tosca-600 to-tosca-800 rounded-2xl p-6 text-white shadow-md">
+                            <h3 class="text-lg font-bold mb-2"><i class="fa-solid fa-heart text-red-300"></i> Hikmah Zakat</h3>
+                            <ul class="list-disc list-inside space-y-1 text-tosca-50 text-sm">
+                                <li>Membersihkan harta dari hak orang lain.</li>
+                                <li>Menumbuhkan rasa empati dan kepedulian terhadap kaum dhuafa.</li>
+                                <li>Mencegah penumpukan kekayaan pada segelintir orang.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION: ADAB REMAJA -->
+                <section id="sec-adab" class="content-section hidden">
+                    <div class="mb-8">
+                        <span class="inline-block px-3 py-1 bg-rose-100 text-rose-700 rounded-full text-sm font-semibold mb-3">Bab 3</span>
+                        <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4 tracking-tight">Adab Pergaulan Remaja</h2>
+                        <p class="text-slate-600 leading-relaxed text-lg">Panduan berinteraksi sosial di era modern dengan tetap menjunjung tinggi akhlakul karimah.</p>
+                    </div>
+
+                    <div class="grid gap-4">
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex gap-4 items-start">
+                            <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-500 flex items-center justify-center flex-shrink-0 mt-1">
+                                <i class="fa-solid fa-mobile-screen"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800 mb-1">Adab Bermedia Sosial</h3>
+                                <p class="text-sm text-slate-600">Saring sebelum sharing (Tabayyun). Hindari menyebarkan hoax, ujaran kebencian, dan menjaga aib diri sendiri serta orang lain di dunia maya.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex gap-4 items-start">
+                            <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-500 flex items-center justify-center flex-shrink-0 mt-1">
+                                <i class="fa-solid fa-user-group"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800 mb-1">Pergaulan Lawan Jenis</h3>
+                                <p class="text-sm text-slate-600">Menjaga batasan (khalwat), menundukkan pandangan (ghaddul bashar), dan berkomunikasi dengan sopan hanya untuk hal yang penting dan bernilai positif.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex gap-4 items-start">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center flex-shrink-0 mt-1">
+                                <i class="fa-solid fa-person-chalkboard"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800 mb-1">Hormat kepada Guru & Orang Tua</h3>
+                                <p class="text-sm text-slate-600">Kunci keberkahan ilmu adalah dengan memuliakan guru dan berbakti kepada kedua orang tua (Birrul Walidain) melalui perkataan dan perbuatan yang lembut.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Spacer for chatbox -->
+                <div class="h-8"></div>
+            </div>
+        </div>
+
+        <!-- Chatbox: Tanya Guru AI -->
+        <div id="ai-chat-panel" class="bg-white border-t border-slate-200 shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.05)] z-20 flex flex-col transition-all duration-300 h-[28rem] max-h-[60vh] shrink-0">
+            <!-- Chat Header -->
+            <div class="bg-gradient-to-r from-tosca-600 to-tosca-700 px-5 py-3 flex justify-between items-center text-white">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fa-solid fa-robot text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold leading-tight">Tanya Guru AI</h3>
+                        <p class="text-xs text-tosca-100">Asisten Belajar PAI-mu</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="clearChat()" class="text-tosca-100 hover:text-white w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors tooltip" title="Bersihkan Obrolan">
+                        <i class="fa-solid fa-trash-can text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat Messages Area -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-5 space-y-4 bg-slate-50/50 scroll-smooth">
+                <!-- Welcome Message -->
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-tosca-100 text-tosca-600 flex items-center justify-center flex-shrink-0 mt-1">
+                        <i class="fa-solid fa-robot text-sm"></i>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl rounded-tl-none shadow-sm border border-slate-200 text-sm text-slate-700 max-w-[85%] prose-ai">
+                        <p>Assalamu'alaikum warahmatullahi wabarakatuh! 👋</p>
+                        <p>Saya adalah <strong>Guru AI</strong>. Ada materi PAI yang kurang jelas atau ingin kamu diskusikan hari ini?</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-4 bg-white border-t border-slate-100">
+                <div class="flex gap-2 items-center bg-slate-50 border border-slate-200 rounded-full p-1 pl-4 focus-within:ring-2 focus-within:ring-tosca-100 focus-within:border-tosca-400 transition-all">
+                    <input type="text" id="chat-input" placeholder="Ketik pertanyaanmu di sini..." class="flex-1 bg-transparent border-none focus:outline-none text-sm text-slate-700 py-2">
+                    <button id="send-btn" class="bg-tosca-600 hover:bg-tosca-700 text-white rounded-full w-10 h-10 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 flex-shrink-0">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+                <p class="text-[10px] text-center text-slate-400 mt-2">AI dapat membuat kesalahan. Cek kembali info penting.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Logika JavaScript -->
+    <script>
+        /* =========================================
+           1. LOGIKA NAVIGASI SIDEBAR
+           ========================================= */
+        const sections = ['asmaul-husna', 'fiqih', 'adab'];
+        
+        function showSection(targetId) {
+            // Sembunyikan semua section
+            sections.forEach(id => {
+                const sec = document.getElementById(`sec-${id}`);
+                const btn = document.getElementById(`btn-${id}`);
+                const iconBg = btn.querySelector('div');
+                
+                sec.classList.add('hidden');
+                sec.classList.remove('fade-in');
+                
+                // Reset styling tombol
+                btn.classList.remove('bg-tosca-800', 'text-white', 'shadow-sm');
+                btn.classList.add('text-tosca-200');
+                iconBg.classList.remove('bg-tosca-700');
+                iconBg.classList.add('bg-transparent');
+            });
+
+            // Tampilkan target
+            const targetSec = document.getElementById(`sec-${targetId}`);
+            const targetBtn = document.getElementById(`btn-${targetId}`);
+            const targetIconBg = targetBtn.querySelector('div');
+
+            targetSec.classList.remove('hidden');
+            // Trigger reflow untuk memutar ulang animasi
+            void targetSec.offsetWidth;
+            targetSec.classList.add('fade-in');
+
+            // Aktifkan styling tombol
+            targetBtn.classList.add('bg-tosca-800', 'text-white', 'shadow-sm');
+            targetBtn.classList.remove('text-tosca-200');
+            targetIconBg.classList.add('bg-tosca-700');
+            targetIconBg.classList.remove('bg-transparent');
+
+            // Tutup sidebar di tampilan mobile saat menu diklik
+            if (window.innerWidth < 768) {
+                closeMobileSidebar();
+            }
+        }
+
+        // Kontrol Sidebar Mobile
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        
+        function openMobileSidebar() {
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.add('opacity-100'), 10);
+        }
+        
+        function closeMobileSidebar() {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.remove('opacity-100');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+
+        document.getElementById('open-sidebar').addEventListener('click', openMobileSidebar);
+        document.getElementById('close-sidebar').addEventListener('click', closeMobileSidebar);
+        overlay.addEventListener('click', closeMobileSidebar);
+
+        /* =========================================
+           2. INTEGRASI GURU AI (GOOGLE GEMINI)
+           ========================================= */
+        
+        // VARIABEL API KEY (Sesuai permintaan)
+        // Jika dijalankan di dalam platform Canvas AI ini, biarkan nilainya '' (kosong)
+        // Jika ingin dijalankan di hosting/komputer sendiri, ganti 'KODE_API_SAYA' dengan API Key asli.
+        const API_KEY = 'AQ.Ab8RN6Lpws4LiA4fkkjEGlfNlDPTxe5Pao4oMue9EfsBxl-QbA'; 
+
+        // Karena model gemini-1.5-flash diminta, kita format URL-nya
+        // Catatan: logika di bawah ini akan mengecek jika nilai masih default maka akan mengirimkan string kosong (berguna untuk lingkungan sandbox ini).
+        const keyToUse = API_KEY === 'AQ.Ab8RN6Lpws4LiA4fkkjEGlfNlDPTxe5Pao4oMue9EfsBxl-QbA' ? '' : API_KEY;
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keyToUse}`;
+
+        // Prompt Sistem Inti (System Instruction)
+        const systemPrompt = "Kamu adalah seorang Guru Pendidikan Agama Islam (PAI) dan Budi Pekerti di sebuah sekolah menengah. Kamu ramah, bijaksana, menyejukkan, dan sabar. Gunakan bahasa Indonesia yang baik, asik, mudah dipahami remaja. Selalu kaitkan jawabanmu dengan nilai-nilai Islami, Al-Quran, atau Hadits jika relevan. Jawablah secara terstruktur, ringkas, dan langsung pada intinya. Gunakan markdown untuk memformat teks (tebal, list). Sapa dengan salam Islami di awal percakapan jika sesuai.";
+
+        let chatHistory = [];
+        
+        // Inisialisasi percakapan
+        function resetChatHistory() {
+             chatHistory = [
+                { role: "user", parts: [{ text: `Instruksi sistem: ${systemPrompt}. Mengertikah kamu?` }] },
+                { role: "model", parts: [{ text: "Ya, saya mengerti. Saya siap menjadi Guru PAI yang ramah dan membantu siswa." }] }
+            ];
+        }
+        resetChatHistory();
+
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        async function handleSend() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            // 1. Tampilkan pesan user
+            appendMessage(message, 'user');
+            chatInput.value = '';
+            chatInput.disabled = true;
+            sendBtn.disabled = true;
+
+            // 2. Tambahkan ke history untuk dikirim ke API
+            chatHistory.push({ role: "user", parts: [{ text: message }] });
+
+            // 3. Tampilkan animasi loading
+            const loadingId = appendLoading();
+
+            try {
+                // 4. Panggil API Gemini
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: chatHistory })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates[0].content) {
+                    const replyText = data.candidates[0].content.parts[0].text;
+                    
+                    // 5. Simpan balasan ke history
+                    chatHistory.push({ role: "model", parts: [{ text: replyText }] });
+                    
+                    // 6. Hapus loading & tampilkan balasan
+                    removeElement(loadingId);
+                    appendMessage(replyText, 'model');
+                } else {
+                    throw new Error("Format respons tidak sesuai");
+                }
+
+            } catch (error) {
+                console.error("AI Error:", error);
+                removeElement(loadingId);
+                chatHistory.pop(); // Hapus pesan user terakhir dari history agar bisa diulang
+                appendMessage("Maaf Nak, Guru AI sedang mengalami sedikit kendala koneksi. Silakan coba tanyakan lagi dalam beberapa saat ya.", 'error');
+            } finally {
+                chatInput.disabled = false;
+                sendBtn.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        function appendMessage(text, sender) {
+            const div = document.createElement('div');
+            div.className = `flex items-start gap-3 fade-in ${sender === 'user' ? 'flex-row-reverse' : ''}`;
+            
+            let avatar = '';
+            let bubbleClass = '';
+            let contentHTML = '';
+
+            if (sender === 'user') {
+                avatar = `<div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center flex-shrink-0 mt-1"><i class="fa-solid fa-user text-sm"></i></div>`;
+                bubbleClass = `bg-tosca-600 text-white p-3.5 rounded-2xl rounded-tr-none shadow-sm text-sm max-w-[85%]`;
+                // Escape HTML untuk user input
+                contentHTML = text.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, '<br>');
+            } else if (sender === 'error') {
+                avatar = `<div class="w-8 h-8 rounded-full bg-red-100 text-red-500 flex items-center justify-center flex-shrink-0 mt-1"><i class="fa-solid fa-triangle-exclamation text-sm"></i></div>`;
+                bubbleClass = `bg-red-50 border border-red-100 text-red-700 p-3.5 rounded-2xl rounded-tl-none shadow-sm text-sm max-w-[85%]`;
+                contentHTML = text;
+            } else {
+                avatar = `<div class="w-8 h-8 rounded-full bg-tosca-100 text-tosca-600 flex items-center justify-center flex-shrink-0 mt-1"><i class="fa-solid fa-robot text-sm"></i></div>`;
+                bubbleClass = `bg-white p-3.5 rounded-2xl rounded-tl-none shadow-sm border border-slate-200 text-sm text-slate-700 max-w-[85%] prose-ai`;
+                // Parsing Markdown dari respon AI
+                contentHTML = marked.parse(text);
+            }
+
+            div.innerHTML = `${avatar}<div class="${bubbleClass}">${contentHTML}</div>`;
+            chatMessages.appendChild(div);
+            scrollToBottom();
+        }
+
+        function appendLoading() {
+            const id = 'loading-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = `flex items-start gap-3 fade-in`;
+            div.innerHTML = `
+                <div class="w-8 h-8 rounded-full bg-tosca-100 text-tosca-600 flex items-center justify-center flex-shrink-0 mt-1"><i class="fa-solid fa-robot text-sm"></i></div>
+                <div class="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-slate-200 flex gap-1.5 items-center max-w-[85%] h-[52px]">
+                    <div class="w-2 h-2 bg-tosca-300 rounded-full animate-bounce"></div>
+                    <div class="w-2 h-2 bg-tosca-400 rounded-full animate-bounce" style="animation-delay: 0.15s"></div>
+                    <div class="w-2 h-2 bg-tosca-500 rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+                </div>
+            `;
+            chatMessages.appendChild(div);
+            scrollToBottom();
+            return id;
+        }
+
+        function removeElement(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function scrollToBottom() {
+            chatMessages.scrollTo({
+                top: chatMessages.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        function clearChat() {
+            // Keep the welcome message only
+            const welcomeHtml = `
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-tosca-100 text-tosca-600 flex items-center justify-center flex-shrink-0 mt-1">
+                        <i class="fa-solid fa-robot text-sm"></i>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-2xl rounded-tl-none shadow-sm border border-slate-200 text-sm text-slate-700 max-w-[85%] prose-ai">
+                        <p>Obrolan telah dibersihkan. Ada lagi yang ingin didiskusikan?</p>
+                    </div>
+                </div>
+            `;
+            chatMessages.innerHTML = welcomeHtml;
+            resetChatHistory();
+        }
+
+        // Event Listeners untuk Chat
+        sendBtn.addEventListener('click', handleSend);
+        chatInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') handleSend();
+        });
+
+    </script>
+</body>
+</html>
